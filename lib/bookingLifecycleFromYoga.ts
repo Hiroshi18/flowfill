@@ -1,39 +1,36 @@
 import { YogaBooking } from "@/components/yoga/useYogaBookings";
+import { BookingLifecycle, TimeSlot } from "./incentive-earnings-model";
 
 /**
- * Updated BookingLifecycle to include financial fields required by the
- * incentive earnings model.
+ * Helper to convert "HH:MM" string to minutes from midnight.
  */
-export type BookingLifecycle = {
-  id: string;
-  studioId: string;
-  customerId: string;
-  slot: string;
-  date: string;
-  bookedAt: string;
-  // FIXED: Added missing properties required by the earnings model
-  attended: boolean;
-  incentiveCreditEUR: number;
-  grossListPriceEUR: number;
-};
+function parseTimeToMinutes(timeStr: string): number {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return (hours || 0) * 60 + (minutes || 0);
+}
 
 export function yogaBookingsToLifecycles(
   bookings: YogaBooking[],
   fallbackCustomerId: string
 ): BookingLifecycle[] {
   return bookings.map((b) => {
-    const slot = `${b.month}-${String(b.day).padStart(2, "0")} ${b.time}`;
     const date = `${b.month}-${String(b.day).padStart(2, "0")}`;
     
+    // FIXED: Convert string time to TimeSlot object required by the model
+    const startMinutes = parseTimeToMinutes(b.time);
+    const slot: TimeSlot = {
+      startMinutes,
+      endMinutes: startMinutes + 60, // Defaulting to 1 hour duration
+    };
+
     return {
       id: b.id,
       studioId: b.studioId,
       customerId: b.customerId ?? fallbackCustomerId,
-      slot,
+      slot, // Now correctly typed as TimeSlot
       date,
       bookedAt: new Date(b.createdAt || Date.now()).toISOString(),
-      // FIXED: Populating required fields from the booking data
-      attended: true, // Defaulting to true for live panel estimates
+      attended: true,
       incentiveCreditEUR: b.paidWith === "credits" ? b.priceEUR : 0,
       grossListPriceEUR: b.priceEUR,
     };
@@ -41,10 +38,14 @@ export function yogaBookingsToLifecycles(
 }
 
 export function buildDemandMap(bookings: YogaBooking[]) {
-  const map: Record<string, number> = {};
+  // Use a Map to match the signature expected by studioPeriodSummary
+  const map = new Map<string, any>();
   bookings.forEach((b) => {
-    const key = `${b.month}-${String(b.day).padStart(2, "0")} ${b.time}`;
-    map[key] = (map[key] || 0) + 1;
+    map.set(b.id, {
+      slot: { startMinutes: parseTimeToMinutes(b.time), endMinutes: parseTimeToMinutes(b.time) + 60 },
+      desirability: demandCurveForYogaBooking(b).desirability,
+      baselineFillRate: 0.5,
+    });
   });
   return map;
 }
@@ -53,12 +54,7 @@ export function rollingPeriod(days: number) {
   const to = new Date();
   const from = new Date();
   from.setDate(to.getDate() - days);
-  
-  const fmt = (d: Date) => {
-    const month = d.toISOString().split("T")[0]!.substring(0, 7);
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${month}-${day}`;
-  };
+  const fmt = (d: Date) => d.toISOString().split("T")[0]!;
   return { from: fmt(from), to: fmt(to) };
 }
 
