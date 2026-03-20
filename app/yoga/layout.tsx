@@ -1,5 +1,5 @@
-import YogaShell from "@/components/yoga/YogaShell";
-import AuthGate from "@/components/auth/AuthGate";
+import { YogaShell } from "@/components/yoga/YogaShell";
+import { AuthGate } from "@/components/auth/AuthGate";
 
 export default function YogaLayout({ children }: { children: React.ReactNode }) {
   return (
