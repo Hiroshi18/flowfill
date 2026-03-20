@@ -23,6 +23,7 @@ function readUser(): AuthUser | null {
 }
 
 function writeUser(user: AuthUser | null) {
+  if (typeof window === "undefined") return;
   try {
     if (!user) window.localStorage.removeItem(STORAGE_KEY);
     else window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
@@ -32,11 +33,25 @@ function writeUser(user: AuthUser | null) {
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(() => readUser());
+  // Initialize with null to avoid hydration mismatch, then load in useEffect
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
+  // Handle initial hydration from localStorage
   useEffect(() => {
-    writeUser(user);
-  }, [user]);
+    const savedUser = readUser();
+    if (savedUser) {
+      setUser(savedUser);
+    }
+    setHydrated(true);
+  }, []);
+
+  // Sync state changes back to localStorage
+  useEffect(() => {
+    if (hydrated) {
+      writeUser(user);
+    }
+  }, [user, hydrated]);
 
   const isAuthed = useMemo(() => Boolean(user), [user]);
 
@@ -45,20 +60,22 @@ export function useAuth() {
   }
 
   async function login(email: string, password: string) {
-    // Backend currently does not model passwords; keep UI field for now.
     if (!email.trim() || !password.trim()) return false;
     try {
       const u = await backend.getUserByEmail(email);
       setUser(toAuthUser(u));
       return true;
     } catch (e) {
-      // If user doesn't exist yet, auto-create (backend has no password auth yet).
       const msg = e instanceof Error ? e.message : "";
       if (msg.startsWith("404")) {
         try {
           const normalized = email.trim().toLowerCase();
           const fallbackName = normalized.split("@")[0]?.trim() || "User";
-          const u = await backend.createUser({ name: fallbackName, email: normalized, role: "customer" });
+          const u = await backend.createUser({ 
+            name: fallbackName, 
+            email: normalized, 
+            role: "customer" 
+          });
           setUser(toAuthUser(u));
           return true;
         } catch {
@@ -72,7 +89,11 @@ export function useAuth() {
   async function register(name: string, email: string, password: string) {
     if (!name.trim() || !email.trim() || !password.trim()) return false;
     try {
-      const u = await backend.createUser({ name: name.trim(), email: email.trim().toLowerCase(), role: "customer" });
+      const u = await backend.createUser({ 
+        name: name.trim(), 
+        email: email.trim().toLowerCase(), 
+        role: "customer" 
+      });
       setUser(toAuthUser(u));
       return true;
     } catch {
@@ -84,6 +105,12 @@ export function useAuth() {
     setUser(null);
   }
 
-  return { user, isAuthed, login, register, logout };
+  return { 
+    user, 
+    isAuthed, 
+    hydrated, // Now correctly exported for use in other components
+    login, 
+    register, 
+    logout 
+  };
 }
-
