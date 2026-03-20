@@ -62,6 +62,7 @@ export function StudiosGlobe({
     const width = cssSize * dpr;
     const height = cssSize * dpr;
 
+    // FIXED: Removed 'markerElevation' which was causing the Type Error during build
     const globe = createGlobe(canvas, {
       devicePixelRatio: dpr,
       width,
@@ -79,7 +80,6 @@ export function StudiosGlobe({
       markers: markersRef.current,
       scale: 1,
       opacity: 1,
-      markerElevation: 0.06,
     });
 
     let raf = 0;
