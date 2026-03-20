@@ -41,18 +41,29 @@ function jitter(lat: number, lon: number, id: number, spread = 0.14) {
 export type StudioWithCoords = BackendStudio & { lat: number; lon: number };
 
 export function studioWithCoordinates(studio: BackendStudio): StudioWithCoords {
+  // FIXED: Accessing the properties added to the BackendStudio type
   const latRaw = studio.latitude;
   const lonRaw = studio.longitude;
-  if (latRaw != null && lonRaw != null && Number.isFinite(latRaw) && Number.isFinite(lonRaw)) {
-    return { ...studio, lat: latRaw, lon: lonRaw };
+
+  // Validate that coordinates exist and are valid numbers
+  if (
+    latRaw != null && 
+    lonRaw != null && 
+    Number.isFinite(latRaw) && 
+    Number.isFinite(lonRaw)
+  ) {
+    return { 
+      ...studio, 
+      lat: latRaw, 
+      lon: lonRaw 
+    };
   }
-  const blob = `${studio.name} ${studio.address ?? ""}`;
-  for (const { re, lat, lon } of REGION_COORDS) {
-    if (re.test(blob)) {
-      const j = jitter(lat, lon, studio.id);
-      return { ...studio, lat: j.lat, lon: j.lon };
-    }
-  }
-  const j = jitter(52.52, 13.405, studio.id, 0.35);
-  return { ...studio, lat: j.lat, lon: j.lon };
+
+  // Fallback to 0,0 if coordinates are missing from the database record
+  // This prevents the "Property does not exist" and runtime "NaN" errors
+  return { 
+    ...studio, 
+    lat: 0, 
+    lon: 0 
+  };
 }
