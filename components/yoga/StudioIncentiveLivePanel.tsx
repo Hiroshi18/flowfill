@@ -25,6 +25,7 @@ type Props = {
 };
 
 export function StudioIncentiveLivePanel({ studioId, className }: Props) {
+  // FIXED: hydrated is now available from useYogaBookings
   const { bookings, hydrated } = useYogaBookings();
   const { user, hydrated: authHydrated } = useAuth();
 
@@ -69,12 +70,7 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
 
   if (!hydrated || !authHydrated) {
     return (
-      <div
-        className={cn(
-          "rounded-2xl border border-border bg-muted/30 p-6",
-          className
-        )}
-      >
+      <div className={cn("rounded-2xl border border-border bg-muted/30 p-6", className)}>
         <div className="h-24 animate-pulse rounded-xl bg-muted" />
       </div>
     );
@@ -86,7 +82,6 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
         "rounded-2xl border border-border bg-gradient-to-b from-muted/40 to-card p-5 shadow-sm dark:from-card/40 dark:to-card/70",
         className
       )}
-      aria-labelledby="live-incentive-heading"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -94,18 +89,9 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
             <span className="size-1.5 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]" />
             Incentive attribution
           </p>
-          <h2 id="live-incentive-heading" className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+          <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
             {studio?.name ?? studioId}
           </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Rolling window <span className="tabular-nums">{period.from}</span>{" "}
-            to <span className="tabular-nums">{period.to}</span>. Estimates credit-attributed list revenue, promotional
-            liability, and net contribution using slot tiers (peak / shoulder / off-peak). Figures update when new
-            bookings are recorded in this session.
-          </p>
-        </div>
-        <div className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium tabular-nums text-foreground">
-          {studioBookings.length} booking{studioBookings.length === 1 ? "" : "s"}
         </div>
       </div>
 
@@ -114,19 +100,19 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
           icon={TrendingUp}
           label="Credit-paid revenue"
           value={`€${summary.attributedRevenueFromIncentivesEUR.toFixed(0)}`}
-          hint="Gross list price, credit checkouts"
+          hint="Gross list price"
         />
         <Metric
           icon={Coins}
           label="Credits recognized"
           value={`€${summary.totalCreditsIssuedEUR.toFixed(0)}`}
-          hint="Promotional liability (model)"
+          hint="Promotional liability"
         />
         <Metric
           icon={Activity}
           label="Net contribution"
           value={`€${netAcrossCustomers.toFixed(0)}`}
-          hint="After credits and policy clawbacks"
+          hint="After policy clawbacks"
         />
         <Metric
           icon={Users}
@@ -136,35 +122,14 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
               ? `${Math.round((offPeakCount / studioBookings.length) * 100)}%`
               : "-"
           }
-          hint={`${offPeakCount} / ${studioBookings.length} in lower-demand hours`}
+          hint={`${offPeakCount} / ${studioBookings.length} in low demand`}
         />
       </div>
-
-      <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className="rounded-md border border-border bg-card/80 px-2.5 py-1 font-medium dark:bg-card/60">
-          Credit settlements: {creditBookings}
-        </span>
-        <span className="rounded-md border border-border bg-card/80 px-2.5 py-1 font-medium dark:bg-card/60">
-          Distinct customers: {summary.customers.length}
-        </span>
-      </div>
-
-      {studioBookings.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-dashed border-border bg-muted/25 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-          No bookings recorded for this studio in the current window. Complete a booking from the schedule above to
-          populate attribution metrics.
-        </p>
-      ) : null}
     </section>
   );
 }
 
-function Metric({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
+function Metric({ icon: Icon, label, value, hint }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   value: string;
