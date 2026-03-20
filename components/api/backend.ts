@@ -26,9 +26,9 @@ export type BackendClassInstance = {
   id: number;
   schedule_id?: number | null;
   studio_id: number;
-  date: string; // YYYY-MM-DD
+  date: string;
   day_of_week: number;
-  time?: string | null; // HH:MM
+  time?: string | null;
   class_type?: string | null;
   instructor?: string | null;
   capacity?: number | null;
@@ -45,8 +45,8 @@ export type BackendBooking = {
   instance_id: number;
   studio_id: number;
   class_type?: string | null;
-  class_date: string; // YYYY-MM-DD
-  class_time?: string | null; // HH:MM
+  class_date: string;
+  class_time?: string | null;
   day_of_week?: number | null;
   status: "confirmed" | "waitlist" | "cancelled" | string;
   attended?: boolean | null;
@@ -63,7 +63,7 @@ export type BackendCreditTxn = {
   reason?: string | null;
   source_instance_id?: number | null;
   dest_instance_id?: number | null;
-  created_at: string; // YYYY-MM-DD
+  created_at: string;
 };
 
 export type BackendCreditBalance = {
@@ -72,10 +72,6 @@ export type BackendCreditBalance = {
   transactions: BackendCreditTxn[];
 };
 
-/**
- * Checks if the backend URL is configured in the environment.
- * Prevents build errors in hooks that rely on this check.
- */
 export function isBackendConfigured(): boolean {
   return typeof process.env.NEXT_PUBLIC_YOGA_BACKEND_URL === "string" && 
          process.env.NEXT_PUBLIC_YOGA_BACKEND_URL.trim().length > 0;
@@ -105,18 +101,13 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const backend = {
-  // --- Users ---
   getUserById: (userId: number) => apiFetch<BackendUser>(`/api/v1/users/${userId}`),
   getUserByEmail: (email: string) =>
     apiFetch<BackendUser>(`/api/v1/users/by-email?email=${encodeURIComponent(email.trim().toLowerCase())}`),
   createUser: (body: { name: string; email: string; role?: string }) =>
     apiFetch<BackendUser>(`/api/v1/users`, { method: "POST", body: JSON.stringify(body) }),
-
-  // --- Studios ---
   listStudios: () => apiFetch<BackendStudio[]>(`/api/v1/studios`),
   getStudio: (studioId: number) => apiFetch<BackendStudio & { class_schedules?: unknown[] }>(`/api/v1/studios/${studioId}`),
-
-  // --- Classes ---
   listClasses: (params?: { studio_id?: number; date?: string; class_type?: string }) => {
     const sp = new URLSearchParams();
     if (params?.studio_id != null) sp.set("studio_id", String(params.studio_id));
@@ -126,19 +117,11 @@ export const backend = {
     return apiFetch<BackendClassInstance[]>(`/api/v1/classes${qs ? `?${qs}` : ""}`);
   },
   getClass: (instanceId: number) => apiFetch<BackendClassInstance>(`/api/v1/classes/${instanceId}`),
-
-  // --- Bookings ---
   createBooking: (body: { user_id: number; instance_id: number }) =>
     apiFetch<BackendBooking>(`/api/v1/bookings`, { method: "POST", body: JSON.stringify(body) }),
   listUserBookings: (userId: number) => apiFetch<BackendBooking[]>(`/api/v1/bookings/user/${userId}`),
   cancelBooking: (bookingId: number) => apiFetch<{ status: string; booking_id: number }>(`/api/v1/bookings/${bookingId}/cancel`, { method: "PATCH" }),
-
-  // --- Credits ---
   getCredits: (userId: number) => apiFetch<BackendCreditBalance>(`/api/v1/credits/user/${userId}`),
-  
-  /**
-   * Processes a credit pack purchase for the user.
-   */
   purchaseCreditPack: (userId: number, packId: string) => 
     apiFetch<{ status: string }>(`/api/v1/credits/user/${userId}/purchase`, {
       method: "POST",
