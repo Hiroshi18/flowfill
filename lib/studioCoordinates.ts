@@ -38,32 +38,25 @@ function jitter(lat: number, lon: number, id: number, spread = 0.14) {
   };
 }
 
-export type StudioWithCoords = BackendStudio & { lat: number; lon: number };
+export type StudioWithCoords = BackendStudio & {
+  lat: number;
+  lon: number;
+};
 
 export function studioWithCoordinates(studio: BackendStudio): StudioWithCoords {
-  // FIXED: Accessing the properties added to the BackendStudio type
   const latRaw = studio.latitude;
   const lonRaw = studio.longitude;
 
-  // Validate that coordinates exist and are valid numbers
+  // Check if they exist and are valid numbers
   if (
     latRaw != null && 
     lonRaw != null && 
     Number.isFinite(latRaw) && 
     Number.isFinite(lonRaw)
   ) {
-    return { 
-      ...studio, 
-      lat: latRaw, 
-      lon: lonRaw 
-    };
+    return { ...studio, lat: latRaw, lon: lonRaw };
   }
 
-  // Fallback to 0,0 if coordinates are missing from the database record
-  // This prevents the "Property does not exist" and runtime "NaN" errors
-  return { 
-    ...studio, 
-    lat: 0, 
-    lon: 0 
-  };
+  // Fallback to 0,0 if the backend record doesn't have coordinates
+  return { ...studio, lat: 0, lon: 0 };
 }
