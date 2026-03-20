@@ -73,8 +73,8 @@ export type BackendCreditBalance = {
 };
 
 /**
- * Checks if the backend URL is configured in the environment.
- * Prevents build errors in hooks that rely on this check.
+ * Checks if the backend URL is configured.
+ * Required for build-time safety in hooks.
  */
 export function isBackendConfigured(): boolean {
   return typeof process.env.NEXT_PUBLIC_YOGA_BACKEND_URL === "string" && 
@@ -84,7 +84,7 @@ export function isBackendConfigured(): boolean {
 function baseUrl() {
   const url = process.env.NEXT_PUBLIC_YOGA_BACKEND_URL;
   if (!url) {
-    throw new Error("Missing NEXT_PUBLIC_YOGA_BACKEND_URL (e.g. http://localhost:8000)");
+    throw new Error("Missing NEXT_PUBLIC_YOGA_BACKEND_URL");
   }
   return url.replace(/\/+$/, "");
 }
@@ -136,9 +136,7 @@ export const backend = {
   // --- Credits ---
   getCredits: (userId: number) => apiFetch<BackendCreditBalance>(`/api/v1/credits/user/${userId}`),
   
-  /**
-   * Processes a credit pack purchase for the user.
-   */
+  // FIXED: Added missing purchase method
   purchaseCreditPack: (userId: number, packId: string) => 
     apiFetch<{ status: string }>(`/api/v1/credits/user/${userId}/purchase`, {
       method: "POST",
