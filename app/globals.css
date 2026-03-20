@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* FlowFill design system: semantic primitives (consumer + operator both compose these). */
+@layer components {
+  .ff-eyebrow {
+    @apply text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+  .ff-page-title {
+    @apply text-xl font-semibold tracking-tight text-foreground sm:text-2xl;
+  }
+  .ff-page-desc {
+    @apply text-sm leading-relaxed text-muted-foreground;
+  }
+  .ff-panel {
+    @apply rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm md:p-5;
+  }
+  /** Inset matches shell headers: px-4 until lg, then px-6. */
+  .ff-main-padding {
+    @apply px-4 py-4 md:py-5 lg:px-6;
+  }
+  /** Max width for primary page content (matches desk + marketing shells). */
+  .ff-page-frame {
+    @apply mx-auto w-full max-w-6xl;
+  }
+  /** In-page section title (below hero cards). */
+  .ff-section-title {
+    @apply text-base font-semibold tracking-tight text-foreground sm:text-lg;
+  }
+  /** Muted rule between page header and body. */
+  .ff-header-rule {
+    @apply border-b border-border/70 pb-4 dark:border-border/55;
+  }
+  /** Desk + Members: single sticky top bar (same chrome everywhere). */
+  .ff-shell-top {
+    @apply sticky top-0 z-10 shrink-0 border-b border-border/80 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 dark:border-border/55 dark:bg-background/90;
+  }
+  .ff-shell-top-pad {
+    @apply px-4 py-3 md:px-6;
+  }
+  .ff-shell-top-trigger {
+    @apply mt-0.5 h-9 w-9 shrink-0 rounded-lg border border-border bg-background shadow-sm text-foreground hover:bg-muted/80 dark:border-sidebar-border dark:bg-sidebar-accent/35 dark:hover:bg-sidebar-accent/55;
+  }
+  /** Title stack: kicker (sm+), page name, one-line hint (sm+). */
+  .ff-shell-top-heading {
+    @apply min-w-0 flex-1 py-0.5;
+  }
+  .ff-shell-top-kicker {
+    @apply hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:block;
+  }
+  .ff-shell-top-title {
+    @apply truncate text-sm font-semibold tracking-tight text-foreground md:text-base;
+  }
+  .ff-shell-top-desc {
+    @apply mt-0.5 hidden max-w-3xl text-xs leading-snug text-muted-foreground sm:line-clamp-2 sm:block;
+  }
+  /** Sidebar brand strip — match Desk + Members. */
+  .ff-shell-sidebar-header {
+    @apply gap-3 border-b border-sidebar-border px-4 py-4;
+  }
+  .ff-surface-muted {
+    @apply bg-muted/50 backdrop-blur-sm dark:bg-muted/35;
+  }
+  .ff-input {
+    @apply w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-[box-shadow] focus-visible:ring-2 focus-visible:ring-ring/50;
+  }
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: oklch(42% 0.04 98);
+  --primary-foreground: #fafafa;
+  --secondary: oklch(96.5% 0.006 106);
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: oklch(42% 0.04 98);
+  --radius: 0.75rem;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 240 5% 26%;
+  /* Dark grey-olive accent (replaces prior indigo sidebar tint) */
+  --sidebar-primary: 100 9% 38%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 5% 96%;
+  --sidebar-accent-foreground: 240 10% 4%;
+  --sidebar-border: 240 5% 90%;
+  --sidebar-ring: 98 11% 45%;
+}
+
+@theme inline {
+  /* Primary UI accent: dark grey-olive (maps to existing `indigo-*` utilities) */
+  --color-indigo-50: oklch(97.8% 0.005 108);
+  --color-indigo-100: oklch(94.5% 0.009 106);
+  --color-indigo-200: oklch(89% 0.012 104);
+  --color-indigo-300: oklch(79% 0.016 102);
+  --color-indigo-500: oklch(53% 0.038 100);
+  --color-indigo-600: oklch(42% 0.04 98);
+  --color-indigo-700: oklch(34% 0.036 96);
+  --color-indigo-800: oklch(27% 0.03 94);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar: hsl(var(--sidebar));
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.dark {
+  /* Sidebar primitives first; surfaces derive from the same family (no bright white panels). */
+  --sidebar: 240 5.9% 10%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 100 8% 52%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 240 4.8% 95.9%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 98 10% 58%;
+
+  --background: hsl(var(--sidebar));
+  --foreground: hsl(var(--sidebar-foreground));
+  --card: hsl(var(--sidebar-accent) / 0.5);
+  --card-foreground: hsl(var(--sidebar-foreground));
+  --popover: hsl(var(--sidebar-accent) / 0.92);
+  --popover-foreground: hsl(var(--sidebar-foreground));
+  --primary: oklch(48% 0.04 98);
+  --primary-foreground: #171717;
+  --secondary: hsl(var(--sidebar-accent) / 0.38);
+  --secondary-foreground: hsl(var(--sidebar-foreground));
+  --muted: hsl(var(--sidebar-accent) / 0.35);
+  --muted-foreground: hsl(var(--sidebar-foreground) / 0.62);
+  --accent: hsl(var(--sidebar-accent) / 0.45);
+  --accent-foreground: hsl(var(--sidebar-foreground));
+  --destructive: #991b1b;
+  --destructive-foreground: #fafafa;
+  --border: hsl(var(--sidebar-border) / 0.55);
+  --input: hsl(var(--sidebar-border) / 0.65);
+  --ring: oklch(48% 0.04 98);
+}
