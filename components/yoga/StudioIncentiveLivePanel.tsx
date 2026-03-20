@@ -25,8 +25,10 @@ type Props = {
 };
 
 export function StudioIncentiveLivePanel({ studioId, className }: Props) {
-  // FIXED: hydrated is now available from useYogaBookings
+  // FIXED: Destructured 'hydrated' to match the updated useYogaBookings hook
   const { bookings, hydrated } = useYogaBookings();
+  
+  // FIXED: Destructured 'hydrated' as 'authHydrated' to match updated useAuth hook
   const { user, hydrated: authHydrated } = useAuth();
 
   const customerKey = user?.id != null ? String(user.id) : "session-anonymous";
@@ -41,108 +43,4 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
   }, [bookings, studioId]);
 
   const studioBookings = useMemo(() => {
-    return bookings.filter(
-      (b) => b.studioId === studioId && bookingInPeriod(b.month, b.day, period)
-    );
-  }, [bookings, studioId, period]);
-
-  const summary = useMemo(() => {
-    const demand = buildDemandMap(studioBookings);
-    const lifecycles = yogaBookingsToLifecycles(studioBookings, customerKey);
-    return studioPeriodSummary(studioId, lifecycles, period, demand);
-  }, [studioBookings, studioId, period, customerKey]);
-
-  const studio = getYogaStudioById(studioId);
-
-  const netAcrossCustomers = useMemo(
-    () => summary.customers.reduce((s, c) => s + c.netContributionEUR, 0),
-    [summary.customers]
-  );
-
-  const offPeakCount = useMemo(() => {
-    return studioBookings.reduce((n, b) => {
-      if (demandCurveForYogaBooking(b).desirability === "off_peak") return n + 1;
-      return n;
-    }, 0);
-  }, [studioBookings]);
-
-  const creditBookings = studioBookings.filter((b) => b.paidWith === "credits").length;
-
-  if (!hydrated || !authHydrated) {
-    return (
-      <div className={cn("rounded-2xl border border-border bg-muted/30 p-6", className)}>
-        <div className="h-24 animate-pulse rounded-xl bg-muted" />
-      </div>
-    );
-  }
-
-  return (
-    <section
-      className={cn(
-        "rounded-2xl border border-border bg-gradient-to-b from-muted/40 to-card p-5 shadow-sm dark:from-card/40 dark:to-card/70",
-        className
-      )}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <span className="size-1.5 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]" />
-            Incentive attribution
-          </p>
-          <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-            {studio?.name ?? studioId}
-          </h2>
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric
-          icon={TrendingUp}
-          label="Credit-paid revenue"
-          value={`€${summary.attributedRevenueFromIncentivesEUR.toFixed(0)}`}
-          hint="Gross list price"
-        />
-        <Metric
-          icon={Coins}
-          label="Credits recognized"
-          value={`€${summary.totalCreditsIssuedEUR.toFixed(0)}`}
-          hint="Promotional liability"
-        />
-        <Metric
-          icon={Activity}
-          label="Net contribution"
-          value={`€${netAcrossCustomers.toFixed(0)}`}
-          hint="After policy clawbacks"
-        />
-        <Metric
-          icon={Users}
-          label="Off-peak share"
-          value={
-            studioBookings.length
-              ? `${Math.round((offPeakCount / studioBookings.length) * 100)}%`
-              : "-"
-          }
-          hint={`${offPeakCount} / ${studioBookings.length} in low demand`}
-        />
-      </div>
-    </section>
-  );
-}
-
-function Metric({ icon: Icon, label, value, hint }: {
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  hint: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-3 dark:bg-card/80">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="size-3.5 shrink-0 opacity-80" />
-        <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
-      </div>
-      <div className="mt-1.5 text-xl font-semibold tabular-nums tracking-tight text-foreground">{value}</div>
-      <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{hint}</p>
-    </div>
-  );
-}
+    return bookings.
