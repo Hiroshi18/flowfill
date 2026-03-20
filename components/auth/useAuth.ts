@@ -26,21 +26,19 @@ function writeUser(user: AuthUser | null) {
   try {
     if (!user) window.localStorage.removeItem(STORAGE_KEY);
     else window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  } catch { /* ignore */ }
+  } catch { }
 }
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // Initialize from storage on mount
   useEffect(() => {
     const saved = readUser();
     if (saved) setUser(saved);
     setHydrated(true);
   }, []);
 
-  // Sync state to storage
   useEffect(() => {
     if (hydrated) writeUser(user);
   }, [user, hydrated]);
