@@ -1,9 +1,6 @@
 import { YogaBooking } from "@/components/yoga/useYogaBookings";
-import { BookingLifecycle, TimeSlot } from "./incentive-earnings-model";
+import { BookingLifecycle, TimeSlot, DemandCurvePoint, BookingId } from "./incentive-earnings-model";
 
-/**
- * Helper to convert "HH:MM" string to minutes from midnight.
- */
 function parseTimeToMinutes(timeStr: string): number {
   const [hours, minutes] = timeStr.split(":").map(Number);
   return (hours || 0) * 60 + (minutes || 0);
@@ -15,19 +12,17 @@ export function yogaBookingsToLifecycles(
 ): BookingLifecycle[] {
   return bookings.map((b) => {
     const date = `${b.month}-${String(b.day).padStart(2, "0")}`;
-    
-    // FIXED: Convert string time to TimeSlot object required by the model
     const startMinutes = parseTimeToMinutes(b.time);
     const slot: TimeSlot = {
       startMinutes,
-      endMinutes: startMinutes + 60, // Defaulting to 1 hour duration
+      endMinutes: startMinutes + 60,
     };
 
     return {
       id: b.id,
       studioId: b.studioId,
       customerId: b.customerId ?? fallbackCustomerId,
-      slot, // Now correctly typed as TimeSlot
+      slot,
       date,
       bookedAt: new Date(b.createdAt || Date.now()).toISOString(),
       attended: true,
@@ -37,12 +32,12 @@ export function yogaBookingsToLifecycles(
   });
 }
 
-export function buildDemandMap(bookings: YogaBooking[]) {
-  // Use a Map to match the signature expected by studioPeriodSummary
-  const map = new Map<string, any>();
+export function buildDemandMap(bookings: YogaBooking[]): Map<BookingId, DemandCurvePoint> {
+  const map = new Map<BookingId, DemandCurvePoint>();
   bookings.forEach((b) => {
+    const startMinutes = parseTimeToMinutes(b.time);
     map.set(b.id, {
-      slot: { startMinutes: parseTimeToMinutes(b.time), endMinutes: parseTimeToMinutes(b.time) + 60 },
+      slot: { startMinutes, endMinutes: startMinutes + 60 },
       desirability: demandCurveForYogaBooking(b).desirability,
       baselineFillRate: 0.5,
     });
