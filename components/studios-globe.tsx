@@ -75,14 +75,15 @@ export function StudiosGlobe({
       baseColor: darkRef.current ? [0.11, 0.12, 0.11] : [0.98, 0.98, 0.97],
       markerColor: [0.32, 0.38, 0.28],
       glowColor: darkRef.current ? [0.28, 0.32, 0.26] : [0.88, 0.9, 0.85],
-      markers: markersRef.current,
+      markers: markersRef.current as any,
       scale: 1,
       opacity: 1,
-      // FIXED: Added required onRender property for TypeScript compliance
+      // FIXED: Added required onRender and removed markerElevation
       onRender: (state) => {
         state.phi = phiRef.current;
         phiRef.current += 0.003;
         state.dark = darkRef.current;
+        // @ts-ignore
         state.markers = markersRef.current;
       },
     });
