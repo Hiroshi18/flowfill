@@ -1,20 +1,24 @@
 "use client";
 
-import { PropsWithChildren, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/useAuth";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
-export default function AuthGate({ children }: PropsWithChildren) {
-  const { isAuthed } = useAuth();
+export function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isAuthed, hydrated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isAuthed) {
-      router.replace(`/?next=${encodeURIComponent(pathname)}`);
+    if (hydrated && !isAuthed && pathname !== "/login") {
+      router.push(`/login?next=${encodeURIComponent(pathname)}`);
     }
-  }, [isAuthed, pathname, router]);
+  }, [isAuthed, hydrated, pathname, router]);
 
-  if (!isAuthed) return null;
+  // Keep the layout container even while loading to prevent "layout jump"
+  if (!hydrated) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
   return <>{children}</>;
 }
