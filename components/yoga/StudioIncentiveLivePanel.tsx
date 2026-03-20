@@ -40,7 +40,7 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
   }, [bookings, studioId]);
 
   const studioBookings = useMemo(() => {
-    // FIXED syntax here
+    // FIXED: Corrected the incomplete filter call
     return bookings.filter(
       (b) => b.studioId === studioId && bookingInPeriod(b.month, b.day, period)
     );
@@ -66,8 +66,6 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
     }, 0);
   }, [studioBookings]);
 
-  const creditBookings = studioBookings.filter((b) => b.paidWith === "credits").length;
-
   if (!hydrated || !authHydrated) {
     return (
       <div className={cn("rounded-2xl border border-border bg-muted/30 p-6", className)}>
@@ -77,12 +75,7 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
   }
 
   return (
-    <section
-      className={cn(
-        "rounded-2xl border border-border bg-gradient-to-b from-muted/40 to-card p-5 shadow-sm dark:from-card/40 dark:to-card/70",
-        className
-      )}
-    >
+    <section className={cn("rounded-2xl border border-border bg-gradient-to-b from-muted/40 to-card p-5 shadow-sm dark:from-card/40 dark:to-card/70", className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -93,56 +86,19 @@ export function StudioIncentiveLivePanel({ studioId, className }: Props) {
             {studio?.name ?? studioId}
           </h2>
         </div>
-        <div className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium tabular-nums text-foreground">
-          {studioBookings.length} booking{studioBookings.length === 1 ? "" : "s"}
-        </div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric
-          icon={TrendingUp}
-          label="Credit-paid revenue"
-          value={`€${summary.attributedRevenueFromIncentivesEUR.toFixed(0)}`}
-          hint="Gross list price"
-        />
-        <Metric
-          icon={Coins}
-          label="Credits recognized"
-          value={`€${summary.totalCreditsIssuedEUR.toFixed(0)}`}
-          hint="Promotional liability"
-        />
-        <Metric
-          icon={Activity}
-          label="Net contribution"
-          value={`€${netAcrossCustomers.toFixed(0)}`}
-          hint="After credits and clawbacks"
-        />
-        <Metric
-          icon={Users}
-          label="Off-peak share"
-          value={
-            studioBookings.length
-              ? `${Math.round((offPeakCount / studioBookings.length) * 100)}%`
-              : "-"
-          }
-          hint={`${offPeakCount} / ${studioBookings.length} in off-peak`}
-        />
+        <Metric icon={TrendingUp} label="Credit-paid revenue" value={`€${summary.attributedRevenueFromIncentivesEUR.toFixed(0)}`} hint="Gross list price" />
+        <Metric icon={Coins} label="Credits recognized" value={`€${summary.totalCreditsIssuedEUR.toFixed(0)}`} hint="Promotional liability" />
+        <Metric icon={Activity} label="Net contribution" value={`€${netAcrossCustomers.toFixed(0)}`} hint="After credits and clawbacks" />
+        <Metric icon={Users} label="Off-peak share" value={studioBookings.length ? `${Math.round((offPeakCount / studioBookings.length) * 100)}%` : "-"} hint={`${offPeakCount} / ${studioBookings.length} in off-peak`} />
       </div>
     </section>
   );
 }
 
-function Metric({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  hint: string;
-}) {
+function Metric({ icon: Icon, label, value, hint }: { icon: ComponentType<{ className?: string }>; label: string; value: string; hint: string; }) {
   return (
     <div className="rounded-xl border border-border bg-card p-3 dark:bg-card/80">
       <div className="flex items-center gap-2 text-muted-foreground">
