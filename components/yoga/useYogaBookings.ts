@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 export type YogaBooking = {
   id: string;
   studioId: string;
+  customerId?: string; // Added to support tracking across sessions
   month: string; // YYYY-MM
   day: number; // 1-31
   time: string;
@@ -33,16 +34,13 @@ export function useYogaBookings() {
   const [bookings, setBookings] = useState<YogaBooking[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
-  // Initial hydration from localStorage
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setBookings(safeParse(saved));
+    if (typeof window !== "undefined") {
+      setBookings(safeParse(window.localStorage.getItem(STORAGE_KEY)));
+      setHydrated(true);
     }
-    setHydrated(true);
   }, []);
 
-  // Sync changes to localStorage after hydration
   useEffect(() => {
     if (hydrated) {
       try {
