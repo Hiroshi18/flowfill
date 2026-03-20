@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import AuthGate from "@/components/auth/AuthGate";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { YOGA_STUDIOS } from "@/components/yoga/useYogaStudio";
 
 export default function MenuPage() {
