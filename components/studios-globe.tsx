@@ -23,7 +23,6 @@ export function StudiosGlobe({
   className,
 }: {
   studios: StudioWithCoords[];
-  /** Max CSS width/height of the square globe (px). */
   maxSize?: number;
   minSize?: number;
   className?: string;
@@ -62,12 +61,11 @@ export function StudiosGlobe({
     const width = cssSize * dpr;
     const height = cssSize * dpr;
 
-    // FIXED: Removed 'markerElevation' which was causing the Type Error during build
     const globe = createGlobe(canvas, {
       devicePixelRatio: dpr,
       width,
       height,
-      phi: phiRef.current,
+      phi: 0,
       theta: 0.22,
       dark: darkRef.current,
       diffuse: 1.12,
@@ -80,25 +78,16 @@ export function StudiosGlobe({
       markers: markersRef.current,
       scale: 1,
       opacity: 1,
+      // FIXED: Added required onRender property for TypeScript compliance
+      onRender: (state) => {
+        state.phi = phiRef.current;
+        phiRef.current += 0.003;
+        state.dark = darkRef.current;
+        state.markers = markersRef.current;
+      },
     });
 
-    let raf = 0;
-    const tick = () => {
-      phiRef.current += 0.003;
-      globe.update({
-        phi: phiRef.current,
-        dark: darkRef.current,
-        markers: markersRef.current,
-        mapBrightness: darkRef.current ? 4.2 : 5.8,
-        baseColor: darkRef.current ? [0.11, 0.12, 0.11] : [0.98, 0.98, 0.97],
-        glowColor: darkRef.current ? [0.28, 0.32, 0.26] : [0.88, 0.9, 0.85],
-      });
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
     return () => {
-      cancelAnimationFrame(raf);
       globe.destroy();
     };
   }, [bounds.width, studioKey, maxSize, minSize]);
