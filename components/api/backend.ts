@@ -20,7 +20,6 @@ export type BackendStudio = {
   default_capacity?: number | null;
   rating?: number | null;
   owner_user_id?: number | null;
-  // FIXED: Added coordinates for the globe component
   latitude?: number | null;
   longitude?: number | null;
 };
@@ -29,9 +28,9 @@ export type BackendClassInstance = {
   id: number;
   schedule_id?: number | null;
   studio_id: number;
-  date: string; // YYYY-MM-DD
+  date: string;
   day_of_week: number;
-  time?: string | null; // HH:MM
+  time?: string | null;
   class_type?: string | null;
   instructor?: string | null;
   capacity?: number | null;
@@ -48,8 +47,8 @@ export type BackendBooking = {
   instance_id: number;
   studio_id: number;
   class_type?: string | null;
-  class_date: string; // YYYY-MM-DD
-  class_time?: string | null; // HH:MM
+  class_date: string;
+  class_time?: string | null;
   day_of_week?: number | null;
   status: "confirmed" | "waitlist" | "cancelled" | string;
   attended?: boolean | null;
@@ -64,4 +63,68 @@ export type BackendCreditTxn = {
   type: string;
   amount: number;
   reason?: string | null;
-  source_instance_id?: number
+  source_instance_id?: number | null;
+  dest_instance_id?: number | null;
+  created_at: string;
+};
+
+export type BackendCreditBalance = {
+  user_id: number;
+  balance: number;
+  transactions: BackendCreditTxn[];
+};
+
+export function isBackendConfigured(): boolean {
+  return typeof process.env.NEXT_PUBLIC_YOGA_BACKEND_URL === "string" && 
+         process.env.NEXT_PUBLIC_YOGA_BACKEND_URL.trim().length > 0;
+}
+
+function baseUrl() {
+  const url = process.env.NEXT_PUBLIC_YOGA_BACKEND_URL;
+  if (!url) throw new Error("Missing NEXT_PUBLIC_YOGA_BACKEND_URL");
+  return url.replace(/\/+$/, "");
+}
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${baseUrl()}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`${res.status} ${res.statusText}${text ? `: ${text}` : ""}`);
+  }
+  return (await res.json()) as T;
+}
+
+export const backend = {
+  getUserById: (userId: number) => apiFetch<BackendUser>(`/api/v1/users/${userId}`),
+  getUserByEmail: (email: string) =>
+    apiFetch<BackendUser>(`/api/v1/users/by-email?email=${encodeURIComponent(email.trim().toLowerCase())}`),
+  createUser: (body: { name: string; email: string; role?: string }) =>
+    apiFetch<BackendUser>(`/api/v1/users`, { method: "POST", body: JSON.stringify(body) }),
+  listStudios: () => apiFetch<BackendStudio[]>(`/api/v1/studios`),
+  getStudio: (studioId: number) => apiFetch<BackendStudio & { class_schedules?: unknown[] }>(`/api/v1/studios/${studioId}`),
+  listClasses: (params?: { studio_id?: number; date?: string; class_type?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.studio_id != null) sp.set("studio_id", String(params.studio_id));
+    if (params?.date) sp.set("date", params.date);
+    if (params?.class_type) sp.set("class_type", params.class_type);
+    const qs = sp.toString();
+    return apiFetch<BackendClassInstance[]>(`/api/v1/classes${qs ? `?${qs}` : ""}`);
+  },
+  getClass: (instanceId: number) => apiFetch<BackendClassInstance>(`/api/v1/classes/${instanceId}`),
+  createBooking: (body: { user_id: number; instance_id: number }) =>
+    apiFetch<BackendBooking>(`/api/v1/bookings`, { method: "POST", body: JSON.stringify(body) }),
+  listUserBookings: (userId: number) => apiFetch<BackendBooking[]>(`/api/v1/bookings/user/${userId}`),
+  cancelBooking: (bookingId: number) => apiFetch<{ status: string; booking_id: number }>(`/api/v1/bookings/${bookingId}/cancel`, { method: "PATCH" }),
+  getCredits: (userId: number) => apiFetch<BackendCreditBalance>(`/api/v1/credits/user/${userId}`),
+  purchaseCreditPack: (userId: number, packId: string) => 
+    apiFetch<{ status: string }>(`/api/v1/credits/user/${userId}/purchase`, {
+      method: "POST",
+      body: JSON.stringify({ pack_id: packId }),
+    }),
+};
