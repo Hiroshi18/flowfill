@@ -10,14 +10,18 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (hydrated && !isAuthed && pathname !== "/login") {
+    if (hydrated && !isAuthed && pathname !== "/login" && pathname !== "/") {
       router.push(`/login?next=${encodeURIComponent(pathname)}`);
     }
   }, [isAuthed, hydrated, pathname, router]);
 
-  // Keep the layout container even while loading to prevent "layout jump"
+  // Provide a minimum height shell during hydration to keep layout intact
   if (!hydrated) {
-    return <div className="min-h-screen bg-background" />;
+    return (
+      <div className="min-h-screen w-full bg-background flex items-center justify-center">
+        <div className="h-6 w-6 animate-pulse rounded-full bg-muted" />
+      </div>
+    );
   }
 
   return <>{children}</>;
