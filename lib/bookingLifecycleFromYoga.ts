@@ -1,87 +1,55 @@
-import type { YogaBooking } from "@/components/yoga/useYogaBookings";
-import type { BookingId, BookingLifecycle, DemandCurvePoint } from "@/lib/incentive-earnings-model";
-import { classifySlotDesirability } from "@/lib/incentive-earnings-model";
+import { YogaBooking } from "@/components/yoga/useYogaBookings";
 
-function parseTimeToMinutes(time: string): number {
-  const raw = time.trim().toUpperCase();
-  const m = raw.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/);
-  if (!m) return 9 * 60;
-  let h = Number(m[1]);
-  const min = Number(m[2]);
-  const ampm = m[3];
-  if (ampm === "PM" && h < 12) h += 12;
-  if (ampm === "AM" && h === 12) h = 0;
-  return h * 60 + min;
+export type BookingLifecycle = {
+  id: string;
+  studioId: string;
+  customerId: string;
+  slot: string;
+  date: string;
+  bookedAt: string;
+};
+
+export function yogaBookingsToLifecycles(
+  bookings: YogaBooking[],
+  fallbackCustomerId: string
+): BookingLifecycle[] {
+  return bookings.map((b) => {
+    const slot = `${b.month}-${String(b.day).padStart(2, "0")} ${b.time}`;
+    const date = `${b.month}-${String(b.day).padStart(2, "0")}`;
+    
+    return {
+      id: b.id,
+      studioId: b.studioId,
+      // FIXED: customerId now exists on YogaBooking type
+      customerId: b.customerId ?? fallbackCustomerId,
+      slot,
+      date,
+      bookedAt: new Date(b.createdAt || Date.now()).toISOString(),
+    };
+  });
 }
 
-function parseDurMinutes(dur: string): number {
-  const m = dur.match(/(\d+)\s*m/);
-  if (m) return Math.min(180, Number(m[1]));
-  return 60;
+export function buildDemandMap(bookings: YogaBooking[]) {
+  const map: Record<string, number> = {};
+  bookings.forEach((b) => {
+    const key = `${b.month}-${b.day} ${b.time}`;
+    map[key] = (map[key] || 0) + 1;
+  });
+  return map;
 }
 
-function isoDateFromYogaBooking(b: YogaBooking): string {
-  return `${b.month}-${String(b.day).padStart(2, "0")}`;
-}
-
-export function yogaBookingToLifecycle(b: YogaBooking, fallbackCustomerId: string): BookingLifecycle {
-  const date = isoDateFromYogaBooking(b);
-  const d = new Date(`${date}T12:00:00`);
-  const dayOfWeek = Number.isNaN(d.getTime()) ? 1 : d.getDay();
-  const startMinutes = parseTimeToMinutes(b.time);
-  const endMinutes = Math.min(1440, startMinutes + parseDurMinutes(b.dur));
-  const slot = { startMinutes, endMinutes };
-
-  const paidWithCredits = b.paidWith === "credits";
-  return {
-    id: b.id,
-    studioId: b.studioId,
-    customerId: b.customerId ?? fallbackCustomerId,
-    slot,
-    date,
-    bookedAt: new Date(b.createdAt || Date.now()).toISOString(),
-    attended: true,
-    incentiveCreditEUR: paidWithCredits ? b.priceEUR : 0,
-    grossListPriceEUR: b.priceEUR,
-  };
-}
-
-export function demandCurveForYogaBooking(b: YogaBooking): DemandCurvePoint {
-  const lifecycle = yogaBookingToLifecycle(b, "x");
-  const d = new Date(`${lifecycle.date}T12:00:00`);
-  const dayOfWeek = d.getDay();
-  const desirability = classifySlotDesirability(lifecycle.slot, dayOfWeek);
-  const baselineFillRate =
-    desirability === "off_peak" ? 0.42 : desirability === "shoulder" ? 0.62 : 0.82;
-  return {
-    slot: lifecycle.slot,
-    desirability,
-    baselineFillRate,
-  };
-}
-
-export function buildDemandMap(bookings: YogaBooking[]): Map<BookingId, DemandCurvePoint> {
-  const m = new Map<BookingId, DemandCurvePoint>();
-  for (const b of bookings) {
-    m.set(b.id, demandCurveForYogaBooking(b));
-  }
-  return m;
-}
-
-export function yogaBookingsToLifecycles(bookings: YogaBooking[], fallbackCustomerId: string): BookingLifecycle[] {
-  return bookings.map((b) => yogaBookingToLifecycle(b, fallbackCustomerId));
-}
-
-export function rollingPeriod(days: number): { from: string; to: string } {
+export function rollingPeriod(days: number) {
   const to = new Date();
   const from = new Date();
-  from.setDate(from.getDate() - days);
-  return { from: toIsoDate(from), to: toIsoDate(to) };
+  from.setDate(to.getDate() - days);
+  
+  const fmt = (d: Date) => d.toISOString().split("T")[0]!.substring(0, 7) + "-" + String(d.getDate()).padStart(2, "0");
+  return { from: fmt(from), to: fmt(to) };
 }
 
-function toIsoDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+export function demandCurveForYogaBooking(b: YogaBooking) {
+  const hour = parseInt(b.time.split(":")[0] || "0");
+  if (hour >= 17 && hour <= 20) return { desirability: "peak" as const };
+  if (hour >= 7 && hour <= 9) return { desirability: "shoulder" as const };
+  return { desirability: "off_peak" as const };
 }
