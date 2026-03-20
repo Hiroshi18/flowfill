@@ -20,6 +20,8 @@ export type BackendStudio = {
   default_capacity?: number | null;
   rating?: number | null;
   owner_user_id?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type BackendClassInstance = {
