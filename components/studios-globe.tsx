@@ -69,7 +69,7 @@ export function StudiosGlobe({
       theta: 0.22,
       dark: darkRef.current,
       diffuse: 1.12,
-      mapSamples: maxSize < 360 ? 10_000 : 14_000,
+      mapSamples: maxSize < 360 ? 10000 : 14000,
       mapBrightness: darkRef.current ? 4.2 : 5.8,
       mapBaseBrightness: darkRef.current ? 0.04 : 0,
       baseColor: darkRef.current ? [0.11, 0.12, 0.11] : [0.98, 0.98, 0.97],
@@ -78,7 +78,6 @@ export function StudiosGlobe({
       markers: markersRef.current as any,
       scale: 1,
       opacity: 1,
-      // FIXED: Added required onRender and removed markerElevation
       onRender: (state) => {
         state.phi = phiRef.current;
         phiRef.current += 0.003;
