@@ -30,18 +30,28 @@ function safeParse(raw: string | null): YogaBooking[] {
 }
 
 export function useYogaBookings() {
-  const [bookings, setBookings] = useState<YogaBooking[]>(() => {
-    if (typeof window === "undefined") return [];
-    return safeParse(window.localStorage.getItem(STORAGE_KEY));
-  });
+  const [bookings, setBookings] = useState<YogaBooking[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
+  // Initial hydration from localStorage
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
-    } catch {
-      // ignore
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      setBookings(safeParse(saved));
     }
-  }, [bookings]);
+    setHydrated(true);
+  }, []);
+
+  // Sync changes to localStorage after hydration
+  useEffect(() => {
+    if (hydrated) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+      } catch {
+        // ignore
+      }
+    }
+  }, [bookings, hydrated]);
 
   const sorted = useMemo(() => {
     return [...bookings].sort((a, b) => {
@@ -64,6 +74,5 @@ export function useYogaBookings() {
     setBookings((prev) => prev.filter((b) => b.id !== id));
   }
 
-  return { bookings: sorted, addBooking, removeBooking };
+  return { bookings: sorted, hydrated, addBooking, removeBooking };
 }
-
